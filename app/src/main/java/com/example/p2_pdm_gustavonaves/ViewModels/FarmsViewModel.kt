@@ -9,7 +9,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.ObjectOutputStream
 import java.util.UUID
+import android.content.Context
+import android.os.Environment
 
 class FarmsViewModel : ViewModel() {
     private var db = FirebaseFirestore.getInstance()
@@ -27,7 +33,6 @@ class FarmsViewModel : ViewModel() {
 
 
     fun getFarms(code: String = "", name: String = "") {
-        Log.d("getFarms", "$code - $name")
 
         viewModelScope.launch {
             val farmList: MutableList<Farm> = mutableListOf()
@@ -60,11 +65,9 @@ class FarmsViewModel : ViewModel() {
         }
     }
 
-
-    fun createOrEdit(farm: Farm, callback: (Boolean, String?) -> Unit) {
+    fun createOrEdit(farm: Farm, originalCode: String?, callback: (Boolean, String?) -> Unit) {
         if (farm.id == null) {
-            val uuid = UUID.randomUUID().toString()
-            farm.id = uuid
+            farm.id = UUID.randomUUID().toString()
         }
 
         val clientMap = hashMapOf(
@@ -73,34 +76,49 @@ class FarmsViewModel : ViewModel() {
             "name" to farm.name,
             "propertyValue" to farm.propertyValue,
             "employeesNumber" to farm.employeesNumber,
-        )
+        ) as HashMap<String, Any>
 
-        db.collection("farm")
-            .whereEqualTo("code", farm.code)
-            .get()
-            .addOnSuccessListener { querySnapshot ->
-                if (querySnapshot.isEmpty) {
-                    db.collection("farm")
-                        .document(farm.id as String)
-                        .set(clientMap)
-                        .addOnSuccessListener {
-                            callback(true, null) // Chamada de sucesso
-                            Log.i("success", "Sucesso ao criar/editar fazenda")
-                        }
-                        .addOnFailureListener { e ->
-                            callback(
-                                false,
-                                "Erro ao criar//editar fazenda: $e.message"
-                            ) // Chamada de erro com a mensagem de erro
-                            Log.i("error", "Erro ao criar/editar fazenda: $e")
-                        }
-                } else {
-                    callback(false, "Já existe uma fazenda com o código fornecido.")
+        if (originalCode == farm.code) {
+            // Se o código original for igual ao código atual, não é necessário fazer a consulta
+            saveFarmToFirestore(farm.id!!, clientMap, callback)
+        } else {
+            val query = db.collection("farm").whereEqualTo("code", farm.code)
+            query.get()
+                .addOnSuccessListener { querySnapshot ->
+                    if (querySnapshot.isEmpty) {
+                        saveFarmToFirestore(farm.id!!, clientMap, callback)
+                    } else {
+                        callback(false, "Já existe uma fazenda com o código fornecido.")
+                    }
                 }
+                .addOnFailureListener { e ->
+                    callback(
+                        false,
+                        "Erro ao buscar fazenda: ${e.message}"
+                    ) // Chamada de erro com a mensagem de erro
+                    Log.i("error", "Erro ao buscar fazenda: $e")
+                }
+        }
+    }
+
+    private fun saveFarmToFirestore(
+        id: String,
+        clientMap: HashMap<String, Any>,
+        callback: (Boolean, String?) -> Unit
+    ) {
+        db.collection("farm")
+            .document(id)
+            .set(clientMap)
+            .addOnSuccessListener {
+                callback(true, null) // Chamada de sucesso
+                Log.i("success", "Sucesso ao criar/editar fazenda")
             }
             .addOnFailureListener { e ->
-                callback(false, e.message) // Chamada de erro com a mensagem de erro
-                Log.i("error", "Erro ao buscar fazenda: $e")
+                callback(
+                    false,
+                    "Erro ao criar/editar fazenda: ${e.message}"
+                ) // Chamada de erro com a mensagem de erro
+                Log.i("error", "Erro ao criar/editar fazenda: $e")
             }
     }
 
@@ -112,5 +130,37 @@ class FarmsViewModel : ViewModel() {
             Log.i("error", "erro ao deletar fazenda : $e")
             callback(false, e.message) // Chamada de erro com a mensagem de erro
         }
+    }
+
+    fun saveFarmsToFile(context: Context, callback: (Boolean, String?) -> Unit) {
+        val farmsList = farms.value
+        val fileName = "farms_data.txt"
+
+        if (isExternalStorageWritable()) {
+            val externalDir =
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val file = File(externalDir, fileName)
+
+            try {
+                val fileOutputStream = FileOutputStream(file)
+                val objectOutputStream = ObjectOutputStream(fileOutputStream)
+
+                objectOutputStream.writeObject(farmsList)
+
+                objectOutputStream.close()
+                fileOutputStream.close()
+                callback(true, null)
+                Log.d("file", "Fazendas salvas em arquivo externo com sucesso")
+            } catch (e: IOException) {
+                callback(false, "Erro ao salvar fazendas em arquivo externo: $e")
+                Log.d("file", "Erro ao salvar farms em arquivo externo: $e")
+            }
+        } else {
+            Log.d("file", "Armazenamento externo não disponível")
+        }
+    }
+
+    private fun isExternalStorageWritable(): Boolean {
+        return Environment.MEDIA_MOUNTED == Environment.getExternalStorageState()
     }
 }

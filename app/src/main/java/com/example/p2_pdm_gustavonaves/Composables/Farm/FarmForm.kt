@@ -49,7 +49,10 @@ fun FormularioCliente(navController: NavController, farmsViewModel: FarmsViewMod
     val propertyValueState = remember { mutableStateOf<Double?>(null) }
     val employeesNumberState = remember { mutableStateOf<Int?>(null) }
 
+    val originalCodeState = remember { mutableStateOf<String?>(null) }
+
     if (selectedFarm != null) {
+        originalCodeState.value = selectedFarm.code;
         idState.value = selectedFarm.id as String;
         codeState.value = selectedFarm.code;
         nameState.value = selectedFarm.name;
@@ -129,7 +132,7 @@ fun FormularioCliente(navController: NavController, farmsViewModel: FarmsViewMod
                         employeesNumber = employeesNumberState.value as Int
                     )
                     scope.launch(Dispatchers.IO) {
-                        farmsViewModel.createOrEdit(farm){ success, error ->
+                        farmsViewModel.createOrEdit(farm, originalCodeState.value){ success, error ->
                             if (success) {
                                 val createOrEdit = if(selectedFarm == null) "criada" else "editada"
                                 Toast.makeText(context, "Fazenda $createOrEdit com sucesso", Toast.LENGTH_SHORT).show()

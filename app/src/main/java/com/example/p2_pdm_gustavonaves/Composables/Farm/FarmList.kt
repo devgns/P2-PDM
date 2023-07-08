@@ -6,9 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.example.p2_pdm_gustavonaves.DataClasses.Farm
@@ -32,7 +29,7 @@ fun FarmsListing(
                     navController.navigate("farm-form")
                     Log.i("add", "add farm")
                 }, onDeleteClicked = {
-                    farmsViewModel.delete(farm.code) { success, msg ->
+                    farmsViewModel.delete(farm.id as String) { success, msg ->
                         if (success) {
                             Toast.makeText(
                                 context,

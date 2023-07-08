@@ -8,8 +8,6 @@ import kotlinx.coroutines.flow.StateFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.Query
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -29,6 +27,8 @@ class FarmsViewModel : ViewModel() {
 
 
     fun getFarms(code: String = "", name: String = "") {
+        Log.d("getFarms", "$code - $name")
+
         viewModelScope.launch {
             val farmList: MutableList<Farm> = mutableListOf()
             var query: Query = db.collection("farm")
@@ -36,58 +36,30 @@ class FarmsViewModel : ViewModel() {
             if (code.isNotEmpty()) {
                 query = query.whereEqualTo("code", code)
             }
-
             if (name.isNotEmpty()) {
                 query = query.whereEqualTo("name", name)
             }
 
-            query = query.orderBy("code")
-
             query.get().addOnSuccessListener { result ->
-                    for (document in result) {
-                        val farm = document.data
+                for (document in result) {
+                    val farm = document.data
 
-                        farmList.add(
-                            Farm(
-                                id = farm["id"] as String?,
-                                code = farm["code"] as String,
-                                name = farm["name"] as String,
-                                propertyValue = farm["propertyValue"].toString().toDouble(),
-                                employeesNumber = farm["employeesNumber"].toString().toInt()
-                            )
+                    farmList.add(
+                        Farm(
+                            id = farm["id"] as String?,
+                            code = farm["code"] as String,
+                            name = farm["name"] as String,
+                            propertyValue = farm["propertyValue"].toString().toDouble(),
+                            employeesNumber = farm["employeesNumber"].toString().toInt()
                         )
-                    }
-                    _farms.value = farmList
+                    )
                 }
+                farmList.sortBy { it.code }
+                _farms.value = farmList
+            }
         }
     }
 
-
-//    fun createOrEdit(farm: Farm, callback: (Boolean, String?) -> Unit) {
-//
-//
-//        if (farm.id == null) {
-//            val uuid = UUID.randomUUID().toString();
-//            farm.id = uuid
-//        }
-//
-//        val clientMap = hashMapOf(
-//            "id" to farm.id,
-//            "code" to farm.code,
-//            "name" to farm.name,
-//            "propertyValue" to farm.propertyValue,
-//            "employeesNumber" to farm.employeesNumber,
-//
-//            )
-//
-//        db.collection("farm").document(farm.id as String).set(farm).addOnCompleteListener {
-//                callback(true, null) // Chamada de sucesso
-//                Log.i("success", "Sucesso ao criar/editar fazenda")
-//            }.addOnFailureListener { e ->
-//                callback(false, e.message) // Chamada de erro com a mensagem de erro
-//                Log.i("error", "Erro ao criar/editar fazenda: $e")
-//            }
-//    }
 
     fun createOrEdit(farm: Farm, callback: (Boolean, String?) -> Unit) {
         if (farm.id == null) {
@@ -116,7 +88,10 @@ class FarmsViewModel : ViewModel() {
                             Log.i("success", "Sucesso ao criar/editar fazenda")
                         }
                         .addOnFailureListener { e ->
-                            callback(false, "Erro ao criar//editar fazenda: $e.message") // Chamada de erro com a mensagem de erro
+                            callback(
+                                false,
+                                "Erro ao criar//editar fazenda: $e.message"
+                            ) // Chamada de erro com a mensagem de erro
                             Log.i("error", "Erro ao criar/editar fazenda: $e")
                         }
                 } else {
@@ -131,18 +106,11 @@ class FarmsViewModel : ViewModel() {
 
     fun delete(id: String, callback: (Boolean, String?) -> Unit) {
         db.collection("farm").document(id).delete().addOnSuccessListener {
-                Log.i("success", "Fazenda deletada com sucesso")
-                callback(true, null) // Chamada de sucesso
-            }.addOnFailureListener { e ->
-                Log.i("error", "erro ao deletar fazenda : $e")
-                callback(false, e.message) // Chamada de erro com a mensagem de erro
-            }
+            Log.i("success", "Fazenda deletada com sucesso")
+            callback(true, null) // Chamada de sucesso
+        }.addOnFailureListener { e ->
+            Log.i("error", "erro ao deletar fazenda : $e")
+            callback(false, e.message) // Chamada de erro com a mensagem de erro
+        }
     }
 }
-
-//var query: Query = db.collection("farm")
-//query = query.whereEqualTo("code", farm.code)
-//query.get().addOnSuccessListener { result ->
-//    Log.i("teste", result.toString())
-//}.addOnFailureListener { e ->
-//}

@@ -1,6 +1,7 @@
 package com.example.p2_pdm_gustavonaves.DataClasses
 
 data class Farm(
+    var id: String?,
     val code: String,
     val name: String,
     val propertyValue: Double,

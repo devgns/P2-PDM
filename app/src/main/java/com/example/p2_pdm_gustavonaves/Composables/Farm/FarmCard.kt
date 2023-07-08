@@ -61,7 +61,7 @@ fun FarmCard(farm: Farm, onEditClicked: () -> Unit,onDeleteClicked: () -> Unit
             }
             Text(text = "Código: ${farm.code}")
             Text(text = "Nome: ${farm.name}")
-            Text(text = "Valor da propriedade: ${farm.propertyValue}")
+            Text(text = "Valor da propriedade: R$ ${farm.propertyValue}")
             Text(text = "Quantidade de funcionários: ${farm.employeesNumber}")
         }
     }
@@ -70,6 +70,6 @@ fun FarmCard(farm: Farm, onEditClicked: () -> Unit,onDeleteClicked: () -> Unit
 @Preview
 @Composable
 fun farmCardPreviem(){
-    val farm = Farm( "1", "Fazenda Boi Gordo", 20.5, 10)
+    val farm = Farm( "afd2sg4dgs0g","1", "Fazenda Boi Gordo", 20.5, 10)
     FarmCard(farm, {}, {})
 }

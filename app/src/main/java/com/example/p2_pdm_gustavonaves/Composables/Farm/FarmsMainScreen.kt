@@ -40,11 +40,11 @@ fun FarmsMainScreen(navController: NavController, farmsViewModel: FarmsViewModel
         topBar = {
             TopAppBar(
                 title = { Text(text = "Fazendas") },
-                navigationIcon = {
-                    IconButton(onClick = {navController.navigate("home") }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
-                    }
-                }
+//                navigationIcon = {
+//                    IconButton(onClick = {navController.navigate("home") }) {
+//                        Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+//                    }
+//                }
             )
         },
         content = { paddingValues ->
@@ -53,13 +53,15 @@ fun FarmsMainScreen(navController: NavController, farmsViewModel: FarmsViewModel
                     .fillMaxSize()
                     .padding(paddingValues),
             ) {
+                FarmFilterForm(farmsViewModel)
+
                 FarmsListing(farmsState.value, farmsViewModel, navController)
             }
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    farmsViewModel.setSelectedCode(null);
+                    farmsViewModel.setSelectedId(null);
                     navController.navigate("farm-form") },
                 modifier = Modifier
                     .padding(16.dp),

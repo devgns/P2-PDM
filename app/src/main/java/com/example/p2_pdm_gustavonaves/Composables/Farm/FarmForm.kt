@@ -43,12 +43,14 @@ fun FormularioCliente(navController: NavController, farmsViewModel: FarmsViewMod
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    val idState = remember { mutableStateOf("") }
     val codeState = remember { mutableStateOf<String>("") }
     val nameState = remember { mutableStateOf<String>("") }
     val propertyValueState = remember { mutableStateOf<Double?>(null) }
     val employeesNumberState = remember { mutableStateOf<Int?>(null) }
 
     if (selectedFarm != null) {
+        idState.value = selectedFarm.id as String;
         codeState.value = selectedFarm.code;
         nameState.value = selectedFarm.name;
         propertyValueState.value = selectedFarm.propertyValue;
@@ -97,7 +99,7 @@ fun FormularioCliente(navController: NavController, farmsViewModel: FarmsViewMod
                     propertyValueState.value = value.toDoubleOrNull()
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                label = { Text("Valor da propriedade") },
+                label = { Text("Valor da propriedade (R$)") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -120,26 +122,22 @@ fun FormularioCliente(navController: NavController, farmsViewModel: FarmsViewMod
             Button(
                 onClick = {
                     val farm = Farm(
+                        id = if(selectedFarm != null) selectedFarm.id else null,
                         code = codeState.value,
                         name = nameState.value,
                         propertyValue = propertyValueState.value as Double,
                         employeesNumber = employeesNumberState.value as Int
                     )
                     scope.launch(Dispatchers.IO) {
-                        farmsViewModel.createOrEdit(farm);
-                    }
-
-                    scope.launch(Dispatchers.Main) {
-                        if (selectedFarm != null) {
-                            Toast.makeText(
-                                context, "Fazenda atualizada com sucesso", Toast.LENGTH_LONG
-                            ).show()
-                        } else {
-                            Toast.makeText(
-                                context, "Fazenda cadastrada com sucesso", Toast.LENGTH_LONG
-                            ).show()
-                        }
-                        navController.popBackStack()
+                        farmsViewModel.createOrEdit(farm){ success, error ->
+                            if (success) {
+                                val createOrEdit = if(selectedFarm == null) "criada" else "editada"
+                                Toast.makeText(context, "Fazenda $createOrEdit com sucesso", Toast.LENGTH_SHORT).show()
+                                navController.popBackStack()
+                            } else {
+                                Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                            }
+                        };
                     }
                 },
                 enabled = codeState.value.isNotBlank() && nameState.value.isNotBlank() && propertyValueState.value != null && employeesNumberState.value != null,

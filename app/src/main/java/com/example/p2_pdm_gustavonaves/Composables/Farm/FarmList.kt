@@ -2,11 +2,14 @@ package com.example.p2_pdm_gustavonaves.Composables.Farm
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.p2_pdm_gustavonaves.DataClasses.Farm
 import com.example.p2_pdm_gustavonaves.ViewModels.FarmsViewModel
@@ -20,7 +23,7 @@ fun FarmsListing(
     val context = LocalContext.current
 
     if (farms.isEmpty()) {
-        Text(text = "Não há fazendas cadastradas até o momento")
+        Text(text = "Nenhuma fazenda encontrada! ", modifier = Modifier.padding(start = 8.dp))
     } else {
         LazyColumn {
             itemsIndexed(farms) { index, farm ->

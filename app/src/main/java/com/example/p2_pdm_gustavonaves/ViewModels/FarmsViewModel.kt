@@ -23,12 +23,43 @@ class FarmsViewModel : ViewModel() {
     private var selectedId: String? = null;
     private val _farms = MutableStateFlow<MutableList<Farm>>(mutableListOf())
     val farms: StateFlow<MutableList<Farm>> = _farms;
+
+
     fun setSelectedId(id: String?) {
         this.selectedId = id
     }
 
     fun getSelectedFarm(): Farm? {
         return farms.value.find { it.id === selectedId }
+    }
+
+    fun getPropertyValueAverage(callback: (Double) -> Unit) {
+        db.collection("farm")
+            .get()
+            .addOnSuccessListener { result ->
+                var sum = 0.0
+                var count = 0
+                for (document in result) {
+                    val farm_data = document.data
+
+                    val farm = Farm(
+                        id = farm_data["id"] as String?,
+                        code = farm_data["code"] as String,
+                        name = farm_data["name"] as String,
+                        propertyValue = farm_data["propertyValue"].toString().toDouble(),
+                        employeesNumber = farm_data["employeesNumber"].toString().toInt()
+                    )
+
+                    sum += farm.propertyValue;
+                    count++;
+                }
+                val average = if (count > 0) sum / count else 0.0
+                callback(average)
+            }
+            .addOnFailureListener { e ->
+                callback(0.0)
+                Log.i("error", "Erro ao obter fazendas: $e")
+            }
     }
 
 
